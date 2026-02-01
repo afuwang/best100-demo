@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best100 講師評鑑平台 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+        .highlight { background: #fef08a; padding: 0 2px; border-radius: 2px; }
+        .search-match { font-weight: 600; color: #7c3aed; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-4 shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold cursor-pointer" onclick="resetSearch()">🏆 Best100 講師評鑑</h1>
+            <nav class="flex items-center gap-4">
+                <a href="#" class="hover:underline hidden md:inline">排行榜</a>
+                <button onclick="showHRModal()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">👔 HR 專區</button>
+                <button onclick="showInstructorModal()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">🎓 講師專區</button>
+                <button class="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100">登入</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">想上某個課程？找到最適合的講師</h2>
+            <p class="text-lg mb-6 opacity-90">搜尋課程主題、評價關鍵字，找到 HR 們推薦的好講師</p>
+            
+            <!-- Enhanced Search Box -->
+            <div class="max-w-3xl mx-auto">
+                <div class="bg-white rounded-xl shadow-xl p-2 flex flex-col md:flex-row gap-2">
+                    <input type="text" id="searchInput" placeholder="試試：幽默風趣、客製化、實務經驗、OGSM、簡報..." 
+                           class="flex-1 px-4 py-3 text-gray-700 outline-none rounded-lg text-lg"
+                           onkeyup="handleSearchKeyup(event)">
+                    <button onclick="performSearch()" class="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 font-semibold">
+                        🔍 搜尋
+                    </button>
+                </div>
+                <p class="text-sm mt-3 opacity-80">同時搜尋：講師姓名 / 課程主題 / 評價內容中的關鍵字</p>
+            </div>
+            
+            <!-- Quick Filters -->
+            <div class="mt-6 flex justify-center gap-2 flex-wrap">
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('簡報')">📊 簡報技巧</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('領導')">👔 領導管理</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('溝通')">💬 溝通表達</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('人資')">👥 人資課程</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('團隊')">🤝 團隊建立</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('幽默')">😄 幽默風趣</span>
+                <span class="bg-white/20 px-4 py-2 rounded-full cursor-pointer hover:bg-white/30 text-sm" onclick="quickSearch('實務')">💼 實務經驗</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results Info -->
+    <div id="searchInfo" class="hidden bg-purple-50 py-3">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <span id="searchResultText" class="text-purple-700"></span>
+            <button onclick="resetSearch()" class="text-purple-600 hover:underline">清除搜尋</button>
+        </div>
+    </div>
+
+    <!-- Stats (show only when not searching) -->
+    <section id="statsSection" class="py-6 bg-white shadow">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                    <div class="text-2xl font-bold text-purple-600">444</div>
+                    <div class="text-gray-500 text-sm">推薦講師</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-purple-600">357</div>
+                    <div class="text-gray-500 text-sm">推薦企業</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-purple-600">378</div>
+                    <div class="text-gray-500 text-sm">專業推薦者</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-purple-600">1,200+</div>
+                    <div class="text-gray-500 text-sm">課程評價</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instructor List -->
+    <section class="py-8">
+        <div class="container mx-auto px-4">
+            <h3 id="listTitle" class="text-xl font-bold mb-6">🏆 TOP 10 推薦講師</h3>
+            <div id="instructorList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards will be inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- HR Section -->
+    <section class="py-10 bg-gradient-to-r from-blue-50 to-purple-50">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold mb-6 text-center">👔 HR 專區</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-lg mb-3">📝 新增課程評價</h4>
+                        <p class="text-gray-600 mb-4">分享您的培訓經驗，幫助更多企業找到優質講師</p>
+                        <button onclick="showReviewForm()" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
+                            我要評價講師
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h4 class="font-bold text-lg mb-3">🔍 進階搜尋</h4>
+                        <p class="text-gray-600 mb-4">依預算、公司規模、課程類型精準配對</p>
+                        <button class="w-full border-2 border-purple-600 text-purple-600 py-3 rounded-lg hover:bg-purple-50">
+                            進階篩選（開發中）
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instructor Section -->
+    <section class="py-10">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold mb-6 text-center">🎓 講師專區</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-green-100">
+                        <h4 class="font-bold text-lg mb-3">✨ 認領我的頁面</h4>
+                        <p class="text-gray-600 mb-4">建立您的專業形象，讓更多企業認識您</p>
+                        <button onclick="showClaimForm()" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700">
+                            開始認領
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-green-100">
+                        <h4 class="font-bold text-lg mb-3">📋 更新個人資料</h4>
+                        <p class="text-gray-600 mb-4">新增經歷、作品集、課程介紹</p>
+                        <button class="w-full border-2 border-green-600 text-green-600 py-3 rounded-lg hover:bg-green-50">
+                            管理我的頁面
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal for Instructor Detail -->
+    <div id="instructorModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6" id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal for HR Review Form -->
+    <div id="reviewModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">📝 新增課程評價</h3>
+                    <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <form id="reviewForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">講師姓名 *</label>
+                        <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="請輸入講師姓名" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">課程主題 *</label>
+                        <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="例如：專業簡報力" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">推薦評分 *</label>
+                        <div class="flex gap-2">
+                            <select class="border rounded-lg px-4 py-2">
+                                <option>10 分 - 強烈推薦</option>
+                                <option>9 分</option>
+                                <option>8 分</option>
+                                <option>7 分</option>
+                                <option>6 分</option>
+                                <option>5 分</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">課程評價 *</label>
+                        <textarea class="w-full border rounded-lg px-4 py-2 h-32" placeholder="分享您的培訓經驗..." required></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">您的公司</label>
+                        <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="公司名稱（選填）">
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <p class="text-sm text-yellow-800">⚠️ 評價需經過 HR 身份驗證後才會公開顯示</p>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-semibold">
+                        提交評價
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Instructor Claim -->
+    <div id="claimModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">🎓 認領講師頁面</h3>
+                    <button onclick="closeClaimModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-2">認領後您可以：</h4>
+                        <ul class="text-sm text-green-800 space-y-1">
+                            <li>✅ 上傳個人照片和簡介</li>
+                            <li>✅ 新增專長領域和經歷</li>
+                            <li>✅ 展示課程作品集</li>
+                            <li>✅ 回覆 HR 的評價</li>
+                            <li>✅ 接收課程邀約通知</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">您的姓名 *</label>
+                        <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="請輸入姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email *</label>
+                        <input type="email" class="w-full border rounded-lg px-4 py-2" placeholder="用於身份驗證">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">聯絡電話</label>
+                        <input type="tel" class="w-full border rounded-lg px-4 py-2" placeholder="選填">
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <p class="text-sm text-yellow-800">⚠️ 我們會透過 Email 進行身份驗證</p>
+                    </div>
+                    <button class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        提交認領申請
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2">Best100 講師評鑑平台 © 2026</p>
+            <p class="text-gray-400 text-sm mb-4">主持人：王永福（福哥）、盧世安</p>
+            <div class="text-xs text-gray-500">
+                <p>版本 2.0 Demo - 由 Mocha 開發 🐕</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 完整講師資料（包含所有評價內容，用於全文搜尋）
+        const instructors = [
+            {
+                id: 1, name: "盧冠諭", score: 220, rank: 1, avatar: "🎯",
+                topics: ["跨世代領導", "團隊建立", "招募面談", "MTP課程", "新手主管", "績效面談"],
+                reviews: [
+                    { topic: "跨世代領導管理", comment: "幽默風趣容易引起基層主管共鳴" },
+                    { topic: "招募面談技巧", comment: "可結合企業情境以及履歷個案，幫助主管思考面談與履歷評估要點，符合企業實際需求" },
+                    { topic: "新手主管面面觀", comment: "上課風格幽默風趣，輕鬆點出新手主管碰到的管理議題，提供有效解決方式" },
+                    { topic: "MTP課程", comment: "課程貼近企業現況，搭配老師幽默且專業的授課，搭配很多演練⋯總之，是個很棒的老師！必推啊！" },
+                    { topic: "團隊共識營", comment: "上課流暢、觀念引導快速且淺顯氣懂、接地氣、學員接受度高" },
+                    { topic: "管理相關議題", comment: "授課可客製化，彈性調整，跨產業經驗豐富" }
+                ]
+            },
+            {
+                id: 2, name: "謝文憲", score: 204, rank: 2, avatar: "🎤",
+                topics: ["溝通激勵", "精準表達", "簡報", "談判技巧", "說出影響力"],
+                reviews: [
+                    { topic: "精準表達", comment: "緊湊的上課節奏與方法論，加上演練點評到位" },
+                    { topic: "激勵課程", comment: "老師能用很結構式的方法讓學員快速吸收，反饋很直接並且切入重點" },
+                    { topic: "說出影響力", comment: "講師課程節奏、氣氛掌握度極高。說服別人不需要長篇大論，3分鐘一個故事就能讓人真心信服" },
+                    { topic: "談判技巧", comment: "實務經驗，熱情自信，有感染力" },
+                    { topic: "團隊領導", comment: "授課風格很適合我們公司（幽默風趣），內容很實用，課後主管反應很好" }
+                ]
+            },
+            {
+                id: 3, name: "張敏敏", score: 164, rank: 3, avatar: "💡",
+                topics: ["OGSM", "銷售技巧", "溝通影響力", "MTP主管訓", "變革領導"],
+                reviews: [
+                    { topic: "OGSM", comment: "顧問級的講師，犀利精準、深入淺出、能示範。敏敏老師有非常敏銳的觀察力，能即時依照現場學員的狀況給予即時調整與回饋" },
+                    { topic: "溝通影響力", comment: "教學經驗豐富，控場能力佳，老師幽默風趣" },
+                    { topic: "OGSM打造高敏捷團隊", comment: "在理論與實務中穿插說明，貼近實際運用且講師有許多跨產業經驗。課程中絕無冷場，15分鐘就抓住一次眼睛" },
+                    { topic: "主管培訓課程", comment: "老師備課非常的用心，並且在課程中做到客製化，更能貼近企業需求" }
+                ]
+            },
+            {
+                id: 4, name: "林娟", score: 154, rank: 4, avatar: "👔",
+                topics: ["人才招募", "績效管理", "薪酬管理", "人資課程", "混合式學習"],
+                reviews: [
+                    { topic: "人資相關主題", comment: "實務經驗豐富且功力深厚，快速釐清問題並提供解決方案。節奏明快、多元授課技巧" },
+                    { topic: "績效管理面談", comment: "理論與實務結合，小組探討活潑設計" },
+                    { topic: "懂用人當主管心不累", comment: "專業認真、教學熱忱、節奏明快、擅長結合自身工作經驗、善用工具輔助、理論與實務兼具" }
+                ]
+            },
+            {
+                id: 5, name: "蘭堉生", score: 148, rank: 5, avatar: "📊",
+                topics: ["績效管理", "薪資結構", "招募甄選", "OKRs", "教育訓練"],
+                reviews: [
+                    { topic: "績效管理、薪資結構", comment: "蘭老師深教授概念與理論，是為人資管理者重要的基礎" },
+                    { topic: "招募甄選", comment: "蘭老師見解精闘，實務講解內容受益良多。是位教學認真，宛如大寶藏般的老師" },
+                    { topic: "薪酬設計課程", comment: "跨國經驗與思維，薪酬設計多變，可對症下藥" }
+                ]
+            },
+            {
+                id: 6, name: "王一郎", score: 142, rank: 6, avatar: "🤝",
+                topics: ["團隊建立", "企業文化", "共識營", "高管策略營"],
+                reviews: [
+                    { topic: "團隊建立活動", comment: "深入企業核心，專心一致與企業同行。授課與引導功力非常深厚" },
+                    { topic: "高管策略營", comment: "是唯一受到老闆高度支持的課程。活動設計相當令人省思、觸發許多主管逆向思考" },
+                    { topic: "團隊共識營", comment: "用生命力教學，體驗式學習，課程中老師的每一字一句都能深入人心" }
+                ]
+            },
+            {
+                id: 7, name: "王永福", score: 140, rank: 7, avatar: "📚",
+                topics: ["簡報技巧", "教學的技術", "內部講師培訓", "專業簡報力", "上台的技術"],
+                reviews: [
+                    { topic: "簡報技巧", comment: "互動高，有演練，很實用。具有系統架構" },
+                    { topic: "專業簡報力", comment: "運用簡潔有步驟的練習與實作，編排符合學員的學習培訓課程，非常實用地可立刻用在工作裡" },
+                    { topic: "教學的技術", comment: "福哥將好教學的氛圍感受，詳細拆解成可以複製的步驟，讓專業知識得以有傳遞的機會" },
+                    { topic: "上台的技術", comment: "福哥是實打實的講師，能在課堂中信手捻來直接進行示範，課程說到的技巧他絕對做得到" }
+                ]
+            },
+            {
+                id: 8, name: "陳俊銘", score: 126, rank: 8, avatar: "🎓",
+                topics: ["情境領導", "內部講師訓", "當責", "Fierce Conversation"],
+                reviews: [
+                    { topic: "內部講師訓", comment: "有獨到的一套內講手法，上課生動吸睛，上課學員都覺得受用！" },
+                    { topic: "情境領導", comment: "內容很落地，可以被主管使用。教學熟練度高，時間掌控佳，氣氛掌控好" },
+                    { topic: "當責", comment: "老師好溝通且有彈性，當責架構簡單明確又好記，對後續展開落地很有幫助。溫暖路線，上課會被治癒" }
+                ]
+            },
+            {
+                id: 9, name: "陶育均", score: 114, rank: 9, avatar: "⏱️",
+                topics: ["時間管理", "專案管理", "敏捷管理", "PDCA", "問題分析"],
+                reviews: [
+                    { topic: "時間管理", comment: "授課有趣時間緊湊，教授的技巧非常實用，課程中教→驗收→教→驗收，讓學員學到然後立刻運用" },
+                    { topic: "專案管理", comment: "具有製造品質的實務經驗，可以很快了解公司的產品線。非常建議製造業主管參加" },
+                    { topic: "PDCA工作術", comment: "備課用心，課前會和上課單位深入溝通課程需求，設計出符合開課單位需求的學習內容" }
+                ]
+            },
+            {
+                id: 10, name: "沈以軒", score: 112, rank: 10, avatar: "⚖️",
+                topics: ["勞動法令", "勞資爭議", "請假規範", "勞動基準法"],
+                reviews: [
+                    { topic: "勞動法令", comment: "深入淺出、旁徵博引功力強，可以把枯燥的法令講得很精彩" },
+                    { topic: "勞資糾紛", comment: "企業輔導、調解、訴訟均有經驗，提供民事、行政法院實際判例與勞檢觀點，講解清楚且兼顧執行實務的考量" },
+                    { topic: "勞動法人資讀書會", comment: "沈宇軒律師對勞動法規及實務運用講解精闘。專業，風格鮮明" }
+                ]
+            }
+        ];
+
+        let currentSearchQuery = '';
+
+        // 全文搜尋（包含講師名、課程主題、評價內容）
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!query) {
+                resetSearch();
+                return;
+            }
+            
+            currentSearchQuery = query;
+            
+            // 計算每個講師的匹配度
+            const results = instructors.map(inst => {
+                let matchScore = 0;
+                let matchedReviews = [];
+                
+                // 姓名匹配（高分）
+                if (inst.name.toLowerCase().includes(query)) {
+                    matchScore += 100;
+                }
+                
+                // 主題匹配（中分）
+                inst.topics.forEach(topic => {
+                    if (topic.toLowerCase().includes(query)) {
+                        matchScore += 50;
+                    }
+                });
+                
+                // 評價內容匹配（低分，但累加）
+                inst.reviews.forEach(review => {
+                    if (review.topic.toLowerCase().includes(query) || 
+                        review.comment.toLowerCase().includes(query)) {
+                        matchScore += 10;
+                        matchedReviews.push(review);
+                    }
+                });
+                
+                return { ...inst, matchScore, matchedReviews };
+            }).filter(inst => inst.matchScore > 0)
+              .sort((a, b) => b.matchScore - a.matchScore);
+            
+            // 顯示搜尋結果
+            if (results.length > 0) {
+                document.getElementById('searchInfo').classList.remove('hidden');
+                document.getElementById('searchResultText').innerHTML = 
+                    `找到 <strong>${results.length}</strong> 位講師符合「<strong>${query}</strong>」`;
+                document.getElementById('listTitle').textContent = '🔍 搜尋結果';
+                document.getElementById('statsSection').classList.add('hidden');
+                renderInstructors(results, query);
+            } else {
+                document.getElementById('searchInfo').classList.remove('hidden');
+                document.getElementById('searchResultText').innerHTML = 
+                    `找不到符合「<strong>${query}</strong>」的講師`;
+                document.getElementById('instructorList').innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <p class="text-4xl mb-4">🔍</p>
+                        <p>找不到相關講師</p>
+                        <p class="text-sm mt-2">試試其他關鍵字，例如：簡報、領導、溝通</p>
+                    </div>
+                `;
+            }
+        }
+
+        function quickSearch(query) {
+            document.getElementById('searchInput').value = query;
+            performSearch();
+        }
+
+        function handleSearchKeyup(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function resetSearch() {
+            currentSearchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchInfo').classList.add('hidden');
+            document.getElementById('listTitle').textContent = '🏆 TOP 10 推薦講師';
+            document.getElementById('statsSection').classList.remove('hidden');
+            renderInstructors(instructors);
+        }
+
+        // 高亮匹配文字
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // 渲染講師卡片
+        function renderInstructors(data, query = '') {
+            const container = document.getElementById('instructorList');
+            container.innerHTML = data.map(inst => {
+                const hasMatchedReviews = inst.matchedReviews && inst.matchedReviews.length > 0;
+                const previewReview = hasMatchedReviews ? inst.matchedReviews[0] : inst.reviews[0];
+                
+                return `
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover transition-all cursor-pointer" 
+                     onclick="showInstructor(${inst.id}, '${query}')">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="text-4xl">${inst.avatar}</div>
+                            <div>
+                                <div class="font-bold text-lg">${highlightText(inst.name, query)}</div>
+                                <div class="text-purple-600 font-semibold">#${inst.rank} 推薦</div>
+                            </div>
+                        </div>
+                        <div class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-bold">
+                            ${inst.score} 分
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${inst.topics.slice(0, 4).map(t => `
+                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-sm ${t.toLowerCase().includes(query) ? 'bg-purple-100 text-purple-700' : ''}">${highlightText(t, query)}</span>
+                        `).join('')}
+                    </div>
+                    <div class="text-gray-500 text-sm border-t pt-3">
+                        ${hasMatchedReviews ? '<span class="text-purple-600 font-medium">📌 相關評價：</span>' : ''}
+                        "${highlightText(previewReview?.comment.slice(0, 60) || '', query)}..."
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // 顯示講師詳情
+        function showInstructor(id, query = '') {
+            const inst = instructors.find(i => i.id === id);
+            if (!inst) return;
+
+            const modal = document.getElementById('instructorModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="text-6xl">${inst.avatar}</div>
+                        <div>
+                            <h2 class="text-2xl font-bold">${inst.name}</h2>
+                            <div class="text-purple-600 font-semibold">#${inst.rank} 推薦講師</div>
+                            <div class="text-gray-500">推薦總分：${inst.score} 分</div>
+                        </div>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-bold text-lg mb-2">📌 專長主題</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${inst.topics.map(t => `
+                            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">${highlightText(t, query)}</span>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-bold text-lg mb-3">💬 課程評價 (${inst.reviews.length})</h3>
+                    <div class="space-y-3 max-h-64 overflow-y-auto">
+                        ${inst.reviews.map(r => `
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="font-semibold text-purple-600 mb-1">${highlightText(r.topic, query)}</div>
+                                <div class="text-gray-600">"${highlightText(r.comment, query)}"</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="showReviewForm()" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
+                        ✍️ 我要評價
+                    </button>
+                    <button class="flex-1 border-2 border-purple-600 text-purple-600 py-3 rounded-lg hover:bg-purple-50">
+                        📧 聯絡講師
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('instructorModal').classList.add('hidden');
+            document.getElementById('instructorModal').classList.remove('flex');
+        }
+
+        function showReviewForm() {
+            closeModal();
+            document.getElementById('reviewModal').classList.remove('hidden');
+            document.getElementById('reviewModal').classList.add('flex');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.add('hidden');
+            document.getElementById('reviewModal').classList.remove('flex');
+        }
+
+        function showClaimForm() {
+            document.getElementById('claimModal').classList.remove('hidden');
+            document.getElementById('claimModal').classList.add('flex');
+        }
+
+        function closeClaimModal() {
+            document.getElementById('claimModal').classList.add('hidden');
+            document.getElementById('claimModal').classList.remove('flex');
+        }
+
+        function showHRModal() { showReviewForm(); }
+        function showInstructorModal() { showClaimForm(); }
+
+        // 點擊 modal 外部關閉
+        ['instructorModal', 'reviewModal', 'claimModal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    this.classList.remove('flex');
+                }
+            });
+        });
+
+        // 表單提交
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('感謝您的評價！我們會在驗證身份後公開顯示。');
+            closeReviewModal();
+        });
+
+        // 初始渲染
+        renderInstructors(instructors);
+    </script>
+</body>
+</html>
